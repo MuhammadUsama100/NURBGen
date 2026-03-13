@@ -1,29 +1,667 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>NURBGen</title>
-    <meta name="description" content="First framework for text-to-CAD generation using NURBS surfaces through LLM-driven modeling. By DFKI, RPTU, and MindGarage." />
-    <meta name="author" content="Muhammad Usama, Mohammad Sadil Khan, Didier Stricker, Muhammad Zeshan Afzal" />
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>[AAAI 2026] NURBGen: High-Fidelity Text-to-CAD Generation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=IBM+Plex+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/academicons/1.9.4/css/academicons.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<link rel="stylesheet" href="assets/css/styles.css"/>
+</head>
+<body>
 
-    <meta property="og:title" content="NURBGen - High-Fidelity Text-to-CAD Generation" />
-    <meta property="og:description" content="First framework for text-to-CAD generation using NURBS surfaces through LLM-driven modeling." />
-    <meta property="og:type" content="website" />
-    <!-- <meta property="og:image" content="" />
+<!-- NAV -->
+<nav>
+  <!-- <span class="nav-logo">NURB<span style="color:var(--amber)">Gen</span></span> -->
+   <a href="#hero">
+  <img src="assets/images/nurbgen-logo.png" alt="NURBGen" style="height:32px;width:auto;display:block;">
+</a>
+   <!-- <span class="nav-logo"><img src="assets/images/nurbgen-logo.png"></span> -->
+  <ul class="nav-links" id="navLinks">
+    <li><a href="#abstract">Overview</a></li>
+    <li><a href="#pipeline">Pipeline</a></li>
+    <li><a href="#results">Results</a></li>
+    <li><a href="#dataset">Dataset</a></li>
+    <li><a href="#samples">Gallery</a></li>
+    <li><a href="#citation">Cite</a></li>
+    <li class="nav-dropdown" id="navDropdown">
+  <button class="nav-dropdown-btn" onclick="toggleDropdown()">
+    Other Research
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="6 9 12 15 18 9"/>
+    </svg>
+  </button>
+  <div class="dropdown-menu">
+    <a href="https://sadilkhan.github.io/text2cad-project/" class="dropdown-item" target="_blank">
+      <span class="dropdown-item-icon">NeurIPS</span>
+      Text2CAD
+    </a>
+    <a href="https://skazizali.com/cadsignet.github.io/" class="dropdown-item" target="_blank">
+      <span class="dropdown-item-icon">CVPR</span>
+      CAD-SIGNet
+    </a>
+    <!-- <div class="dropdown-divider"></div> -->
+    <a href="https://sankalpsinha-cmos.github.io/MARVEL/" class="dropdown-item" target="_blank">
+      <span class="dropdown-item-icon">CVPR</span>
+      MARVEL
+    </a>
+  </div>
+</li>
+  </ul>
+  <div class="nav-right">
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+      <span class="theme-icon moon">🌙</span>
+      <span class="theme-icon sun">☀️</span>
+    </button>
+    <div class="hamburger" id="hamburger" onclick="document.getElementById('navLinks').classList.toggle('open')">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+</nav>
 
-    <meta name="twitter:card" content="summary_large_image" /> -->
-    <!-- <meta name="twitter:site" content="@Lovable" /> -->
-    <meta property="og:image" content="/src/assets/N.png" />
-    <!-- <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" /> -->
+<!-- HERO -->
+<section id="hero">
+  <canvas id="nurbs-canvas-hero"></canvas>
+  <div class="hero-overlay"></div>
+  <div class="hero-content">
+    <div class="hero-badge">AAAI 2026 · Text-to-CAD Generation</div>
+    <h1 class="hero-title">
+      <span class="highlight">NURBGen</span><br/>
+      High-Fidelity Text-to-CAD Generation through LLM-Driven NURBS Modeling
+    </h1>
+    <p class="hero-subtitle">
+      The first framework to generate industry-standard NURBS surfaces directly from text prompts, producing editable, parametric CAD models convertible to STEP format.
+    </p>
+    <div class="hero-authors">
+      <a href="https://muhammadusama100.github.io/MUsama/">Muhammad Usama</a><sup>1,2,3,*</sup>
+      <span class="sep">·</span>
+      <a href="https://mdsadilkhan.onrender.com/">Mohammad Sadil Khan</a><sup>1,2,3,*,†</sup>
+      <span class="sep">·</span>
+      <a href="https://av.dfki.de/members/stricker/">Didier Stricker</a><sup>1,2</sup>
+      <span class="sep">·</span>
+      <a href="https://scholar.google.com/citations?user=kHMVj6oAAAAJ&hl=en">Muhammad Zeshan Afzal</a><sup>1,3</sup>
+    </div>
+    <div class="hero-affils">
+      <span><sup>1</sup>DFKI Kaiserslautern</span>
+      <span><sup>2</sup>RPTU Kaiserslautern-Landau</span>
+      <span><sup>3</sup>MindGarage</span>
+    </div>
+    <div class="hero-note">
+      <span>* Equally Contributing First Authors</span>
+      <span>† Corresponding author</span>
+    </div>
+    <div class="hero-buttons">
+  <a href="https://arxiv.org/abs/2511.06194" class="btn btn-primary" target="_blank">
+    <i class="ai ai-arxiv"></i>
+    arXiv
+  </a>
+  <a href="https://github.com/SadilKhan/NURBGen" class="btn btn-outline" target="_blank">
+    <i class="fab fa-github"></i>
+    GitHub
+  </a>
+  <a href="https://huggingface.co/datasets/SadilKhan/PartABC" class="btn btn-amber" target="_blank">
+    <i class="fa-solid fa-database"></i>
+    partABC Dataset
+  </a>
+  <a href="https://mdsadilkhan.onrender.com/publications/data/nurbgen_poster.png" class="btn btn-outline" target="_blank">
+    <i class="fa-solid fa-scroll"></i>
+    Poster
+  </a>
+</div>
+    <!-- <div class="hero-stats">
+      <div class="stat-item">
+        <span class="stat-val">64%</span>
+        <span class="stat-label">Human Preference</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-val">0.018</span>
+        <span class="stat-label">Invalidity Ratio</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-val">300k</span>
+        <span class="stat-label">partABC Models</span>
+      </div>
+    </div> -->
+  </div>
+
+  <div class="scroll-hint">
+    <span>SCROLL</span>
+    <div class="scroll-arrow"></div>
+  </div>
+</section>
+
+<!-- ABSTRACT -->
+<section id="abstract">
+  <canvas id="nurbs-bg-canvas"></canvas>
+  <div class="section-inner">
+
+    <div class="abstract-header fade-in">
+      <span class="section-label">/ 01 — Overview</span>
+      <h2 class="section-title">Welcome to NURBGen</h2>
+      <!-- <p class="section-desc">
+        We present <strong style="color:var(--cyan)">NURBGen</strong>, the first framework to generate high-fidelity 3D CAD models directly from text using Non-Uniform Rational B-Splines (NURBS). We fine-tune <strong style="color:var(--text)">Qwen3-4B</strong> to translate free-form text into structured JSON containing NURBS surface parameters — directly convertible to industry-standard BRep format. We also introduce <strong style="color:var(--text)">partABC</strong>, a 300k-model dataset with NURBS annotations and high-quality captions.
+      </p> -->
+    </div>
+
+    <div class="abstract-keypoints fade-in">
+      <div class="keypoint">
+        <span class="keypoint-num">K1</span>
+        <div class="keypoint-title">First NURBS-Based Text-to-CAD</div>
+        <div class="keypoint-desc">First framework to generate industry-standard NURBS representations directly from text prompts using LLMs.</div>
+      </div>
+      <div class="keypoint">
+        <span class="keypoint-num">K2</span>
+        <div class="keypoint-title">partABC Dataset</div>
+        <div class="keypoint-desc">300k part-level CAD models with NURBS annotations and automatically generated high-quality captions (~85% accuracy).</div>
+      </div>
+      <div class="keypoint">
+        <span class="keypoint-num">K3</span>
+        <div class="keypoint-title">Hybrid Representation</div>
+        <div class="keypoint-desc">Combines untrimmed NURBS with analytic primitives — lines, arcs, circles — for geometric robustness and token efficiency.</div>
+      </div>
+      <div class="keypoint">
+        <span class="keypoint-num">K4</span>
+        <div class="keypoint-title">State-of-the-Art Performance</div>
+        <div class="keypoint-desc">Surpasses all baselines with 64.1% human preference and lowest invalidity ratio of 0.018.</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- PIPELINE -->
+<section id="pipeline">
+  <div class="section-inner">
+    <span class="section-label fade-in">/ 02 — Method</span>
+    <h2 class="section-title fade-in">Architecture &amp; Pipeline</h2>
+    <p class="section-desc fade-in">A two-stage pipeline: data preparation with automated NURBS extraction and captioning, followed by LLM fine-tuning for structured CAD generation.</p>
+
+    <div class="pipeline-steps fade-in">
+      <div class="pipeline-step">
+        <span class="step-num">01</span>
+        <div class="step-icon">📐</div>
+        <div class="step-title">NURBS Extraction</div>
+        <p class="step-desc">BRep models are normalized and converted to untrimmed NURBS via pythonOCC. Control points, knot vectors, degrees, and weights are extracted for each face.</p>
+      </div>
+      <div class="pipeline-step">
+        <div class="step-icon">🔤</div>
+        <span class="step-num">02</span>
+        <div class="step-title">Caption Generation</div>
+        <p class="step-desc">Multi-view renders (6 viewpoints) fed into InternVL3-13B with geometric metadata guidance: dimensions, holes, volume, surface area — producing shape-centric captions.</p>
+      </div>
+      <div class="pipeline-step">
+        <div class="step-icon">🧠</div>
+        <span class="step-num">03</span>
+        <div class="step-title">LLM Fine-tuning</div>
+        <p class="step-desc">Qwen3-4B fine-tuned with LoRA (rank 64, α=128) on 180k steps across 4×H200 GPUs. Maps text captions to structured JSON NURBS representations.</p>
+      </div>
+    </div>
+
+    <div class="arch-img fade-in">
+      <img src="/assets/images/architecture-diagram.jpg" alt="NURBGen Architecture Pipeline" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
+      <div style="display:none;align-items:center;justify-content:center;height:300px;color:var(--text3);font-family:'IBM Plex Mono',monospace;font-size:0.8rem;">[ architecture-diagram.jpg ]</div>
+      <div class="arch-caption">Figure 2: Overview of partABC dataset, data preparation and fine-tuning pipeline.</div>
+    </div>
+
+    <div style="margin-top:3rem;" class="fade-in">
+      <h3 style="font-family:'DM Serif Display',serif;font-size:1.5rem;margin-bottom:1.5rem;color:var(--text);">Hybrid Representation</h3>
+      <div class="hybrid-grid">
+        <div>
+          <p style="font-size:0.9rem;color:var(--text2);margin-bottom:1.25rem;line-height:1.75;">
+            Not all surfaces can be robustly represented by untrimmed NURBS. Thin regions around holes or fillets often introduce geometric artifacts. We detect degenerate faces using Chamfer Distance comparison (CD ≤ ε, where ε = 6×10⁻⁴) and fall back to analytic primitives.
+          </p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.25rem;">
+            <div class="card" style="padding:1.25rem;text-align:center;">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:1.5rem;color:var(--cyan);margin-bottom:0.35rem;">70%</div>
+              <div style="font-size:0.75rem;color:var(--text3);">NURBS surfaces</div>
+            </div>
+            <div class="card" style="padding:1.25rem;text-align:center;">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:1.5rem;color:var(--amber);margin-bottom:0.35rem;">30%</div>
+              <div style="font-size:0.75rem;color:var(--text3);">Analytic primitives</div>
+            </div>
+          </div>
+          <div style="font-size:0.82rem;color:var(--text3);font-family:'IBM Plex Mono',monospace;margin-bottom:0.5rem;">Analytic primitives include:</div>
+          <div style="display:flex;flex-wrap:wrap;gap:0.5rem;">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:0.7rem;padding:0.2rem 0.6rem;border-radius:4px;border:1px solid var(--border2);color:var(--cyan);background:var(--glow);">Geom_Circle</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:0.7rem;padding:0.2rem 0.6rem;border-radius:4px;border:1px solid var(--border2);color:var(--cyan);background:var(--glow);">Geom_Line</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:0.7rem;padding:0.2rem 0.6rem;border-radius:4px;border:1px solid var(--border2);color:var(--cyan);background:var(--glow);">Geom_BSpline</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:0.7rem;padding:0.2rem 0.6rem;border-radius:4px;border:1px solid var(--border2);color:var(--cyan);background:var(--glow);">Geom_Arc</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:0.7rem;padding:0.2rem 0.6rem;border-radius:4px;border:1px solid var(--border2);color:var(--cyan);background:var(--glow);">Geom_Ellipse</span>
+          </div>
+        </div>
+        <div>
+          <div style="margin-bottom:0.75rem;font-size:0.75rem;color:var(--text3);font-family:'IBM Plex Mono',monospace;">NURBS face representation (JSON)</div>
+          <div class="code-block">
+<span class="comment">// Face encoded as NURBS surface</span>
+{
+  <span class="key">"face_0"</span>: {
+    <span class="key">"poles"</span>: [[[<span class="num">0.1285</span>, <span class="num">0.9999</span>, <span class="num">0.4857</span>]...]],
+    <span class="key">"u_knots"</span>: [<span class="num">1.5707</span>, <span class="num">3.1415</span>, <span class="num">4.7123</span>],
+    <span class="key">"v_knots"</span>: [<span class="num">-0.1714</span>, <span class="num">0.1428</span>],
+    <span class="key">"u_mults"</span>: [<span class="num">3</span>, <span class="num">2</span>, <span class="num">3</span>],
+    <span class="key">"v_mults"</span>: [<span class="num">2</span>, <span class="num">2</span>],
+    <span class="key">"u_degree"</span>: <span class="num">2</span>,
+    <span class="key">"v_degree"</span>: <span class="num">1</span>,
+    <span class="key">"weights"</span>: [[<span class="num">1.0</span>, <span class="num">2</span>]...]
+  },
+  <span class="comment">// Degenerate face → analytic fallback</span>
+  <span class="key">"face_1"</span>: {
+    <span class="key">"type"</span>: <span class="str">"Geom_Circle"</span>,
+    <span class="key">"center"</span>: [<span class="num">0.282</span>, <span class="num">0.083</span>, <span class="num">0.416</span>],
+    <span class="key">"radius"</span>: <span class="num">0.051984</span>,
+    <span class="key">"normal"</span>: [<span class="num">-1.0</span>, <span class="num">0.0</span>, <span class="num">0.0</span>]
+  }
+}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:2.5rem;padding:1.5rem 2rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius2);display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1.5rem;" class="fade-in">
+      <div>
+        <div class="nurbs-label" style="margin-bottom:0.35rem;">Model</div>
+        <div style="font-size:0.9rem;font-weight:600;color:var(--text);">Qwen3-4B + LoRA</div>
+        <div style="font-size:0.75rem;color:var(--text3);">rank 64, α=128</div>
+      </div>
+      <div>
+        <div class="nurbs-label" style="margin-bottom:0.35rem;">Training</div>
+        <div style="font-size:0.9rem;font-weight:600;color:var(--text);">180k steps</div>
+        <div style="font-size:0.75rem;color:var(--text3);">4×H200 GPUs · 3 days</div>
+      </div>
+      <div>
+        <div class="nurbs-label" style="margin-bottom:0.35rem;">Context Window</div>
+        <div style="font-size:0.9rem;font-weight:600;color:var(--text);">8192 / 14k tokens</div>
+        <div style="font-size:0.75rem;color:var(--text3);">train / inference</div>
+      </div>
+      <div>
+        <div class="nurbs-label" style="margin-bottom:0.35rem;">Throughput</div>
+        <div style="font-size:0.9rem;font-weight:600;color:var(--text);">~800 tokens/s</div>
+        <div style="font-size:0.75rem;color:var(--text3);">NVIDIA RTX 3090</div>
+      </div>
+      <div>
+        <div class="nurbs-label" style="margin-bottom:0.35rem;">Optimizer</div>
+        <div style="font-size:0.9rem;font-weight:600;color:var(--text);">AdamW</div>
+        <div style="font-size:0.75rem;color:var(--text3);">lr=5×10⁻⁵, linear warm-up</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- RESULTS -->
+<section id="results">
+  <div class="section-inner">
+    <span class="section-label fade-in">/ 03 — Evaluation</span>
+    <h2 class="section-title fade-in">Performance Results</h2>
+    <p class="section-desc fade-in">NURBGen significantly outperforms all baselines in both geometric fidelity and visual alignment with text prompts.</p>
+
+    <div class="metrics-grid fade-in">
+      <div class="metric-card cyan">
+        <div class="metric-val">64.1%</div>
+        <div class="metric-label">Human Preference<br/>(Top-1)</div>
+        <div class="metric-sub">User eval · 1k samples</div>
+      </div>
+      <div class="metric-card amber">
+        <div class="metric-val">61.6%</div>
+        <div class="metric-label">GPT-4o Preference<br/>(5k samples)</div>
+        <div class="metric-sub">Multi-view comparison</div>
+      </div>
+      <div class="metric-card green">
+        <div class="metric-val">0.018</div>
+        <div class="metric-label">Invalidity Ratio<br/>(Lowest)</div>
+        <div class="metric-sub">Valid BRep structures</div>
+      </div>
+      <div class="metric-card purple">
+        <div class="metric-val">4.43</div>
+        <div class="metric-label">Chamfer Distance<br/>(×10²)</div>
+        <div class="metric-sub">8192-pt normalized</div>
+      </div>
+    </div>
+
+    <!-- Visual bar chart -->
+    <div class="card fade-in" style="margin-bottom:2rem;">
+      <h3 style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:0.35rem;">Human Preference Study (%)</h3>
+      <p style="font-size:0.8rem;color:var(--text3);margin-bottom:1.5rem;">5 CAD designers chose the best reconstruction per prompt. Higher is better.</p>
+      <div class="bar-chart-wrap">
+        <div class="bar-group">
+          <span class="bar-label">NURBGen</span>
+          <div class="bar-track">
+            <div class="bar-fill cyan" data-width="64.1" style="">64.1%</div>
+          </div>
+        </div>
+        <div class="bar-group">
+          <span class="bar-label">Text2CAD</span>
+          <div class="bar-track">
+            <div class="bar-fill soft" data-width="26.1" style="">26.1%</div>
+          </div>
+        </div>
+        <div class="bar-group">
+          <span class="bar-label">DeepCAD</span>
+          <div class="bar-track">
+            <div class="bar-fill muted" data-width="5.6" style="">5.6%</div>
+          </div>
+        </div>
+        <div class="bar-group">
+          <span class="bar-label">GPT-4o</span>
+          <div class="bar-track">
+            <div class="bar-fill muted" data-width="1.5" style="">1.5%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tables -->
+    <div class="table-tabs fade-in">
+      <button class="tab-btn active" onclick="switchTab('tab-user', this)">User Evaluation</button>
+      <button class="tab-btn" onclick="switchTab('tab-geo', this)">Geometric Metrics</button>
+    </div>
+
+    <div id="tab-user" class="tab-pane active fade-in">
+      <div class="table-wrap">
+        <table class="results-table">
+          <thead>
+            <tr>
+              <th>Method</th>
+              <th>User (1k) ↑</th>
+              <th>GPT-4o ↑</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Undecided</td>
+              <td>2.7</td>
+              <td>3.2</td>
+            </tr>
+            <tr>
+              <td>GPT-4o</td>
+              <td>1.5</td>
+              <td>1.9</td>
+            </tr>
+            <tr>
+              <td>DeepCAD</td>
+              <td>5.6</td>
+              <td>6.1</td>
+            </tr>
+            <tr>
+              <td>Text2CAD</td>
+              <td>26.1</td>
+              <td>27.2</td>
+            </tr>
+            <tr class="ours">
+              <td>NURBGen (Ours) <span class="badge-best">SOTA</span></td>
+              <td>64.1</td>
+              <td>61.6</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="table-note">↑ Higher is better. Human evaluation: 5 CAD designers via majority vote on 1k samples. GPT-4o: 2×2 multi-view grid evaluation on 5k samples.</div>
+      </div>
+    </div>
+
+    <div id="tab-geo" class="tab-pane fade-in">
+      <div class="table-wrap">
+        <table class="results-table">
+          <thead>
+            <tr>
+              <th>Method</th>
+              <th>IR ↓</th>
+              <th>CD ↓</th>
+              <th>HD ↓</th>
+              <th>JSD ↓</th>
+              <th>MMD ↓</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>GPT-4o</td>
+              <td>0.17</td>
+              <td>7.20</td>
+              <td>0.36</td>
+              <td>72.87</td>
+              <td>4.17</td>
+            </tr>
+            <tr>
+              <td>DeepCAD</td>
+              <td>0.32</td>
+              <td>10.28</td>
+              <td>0.45</td>
+              <td>89.77</td>
+              <td>4.43</td>
+            </tr>
+            <tr>
+              <td>Text2CAD</td>
+              <td>0.05</td>
+              <td>9.66</td>
+              <td>0.42</td>
+              <td>85.27</td>
+              <td>4.54</td>
+            </tr>
+            <tr class="ours">
+              <td>NURBGen (Ours) <span class="badge-best">SOTA</span></td>
+              <td>0.018</td>
+              <td>4.43</td>
+              <td>0.25</td>
+              <td>57.94</td>
+              <td>2.14</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="table-note">CD, JSD, MMD multiplied by 10². ↓ Lower is better. Evaluated on 7,500 test samples using 8,192 uniformly sampled points normalized to unit cube. IR: Invalidity Ratio, CD: Chamfer Distance, HD: Hausdorff Distance, JSD: Jensen-Shannon Divergence, MMD: Maximum Mean Discrepancy.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- DATASET -->
+<section id="dataset">
+  <div class="section-inner">
+    <span class="section-label fade-in">/ 04 — Dataset</span>
+    <h2 class="section-title fade-in">The partABC Dataset</h2>
+    <p class="section-desc fade-in">A large-scale curated dataset of 300k part-level CAD models with NURBS annotations and high-quality automatically generated captions.</p>
+
+    <div class="dataset-grid fade-in">
+      <div>
+        <div class="dataset-stats">
+          <div class="dstat">
+            <span class="dstat-val">300k</span>
+            <span class="dstat-label">Part Models</span>
+          </div>
+          <div class="dstat">
+            <span class="dstat-val">~85%</span>
+            <span class="dstat-label">Caption Accuracy</span>
+          </div>
+          <div class="dstat">
+            <span class="dstat-val">3</span>
+            <span class="dstat-label">Complexity Tiers</span>
+          </div>
+        </div>
+        <p style="font-size:0.9rem;color:var(--text2);line-height:1.75;margin-bottom:1.25rem;">
+          Derived from the ABC dataset (1M CAD models), we decompose assembly-level designs into individual part-level components using PythonOCC, generating 3M instances. A complexity-aware filtering strategy retains 300k geometrically diverse parts.
+        </p>
+        <div class="complexity-breakdown">
+          <div style="font-size:0.75rem;color:var(--text3);font-family:'IBM Plex Mono',monospace;margin-bottom:0.75rem;">COMPLEXITY DISTRIBUTION</div>
+          <div class="complexity-item">
+            <div class="complexity-dot" style="background:#4a9eff;"></div>
+            <span class="complexity-label">Simple</span>
+            <div class="complexity-bar"><div class="complexity-bar-fill" style="width:10%;background:#4a9eff;"></div></div>
+            <span class="complexity-pct">10%</span>
+          </div>
+          <div class="complexity-item">
+            <div class="complexity-dot" style="background:var(--cyan);"></div>
+            <span class="complexity-label">Moderate</span>
+            <div class="complexity-bar"><div class="complexity-bar-fill" style="width:50%;background:var(--cyan);"></div></div>
+            <span class="complexity-pct">50%</span>
+          </div>
+          <div class="complexity-item">
+            <div class="complexity-dot" style="background:var(--amber);"></div>
+            <span class="complexity-label">Complex</span>
+            <div class="complexity-bar"><div class="complexity-bar-fill" style="width:40%;background:var(--amber);"></div></div>
+            <span class="complexity-pct">40%</span>
+          </div>
+        </div>
+        <!-- <div style="margin-top:1.5rem;">
+          <div style="font-size:0.75rem;color:var(--text3);font-family:'IBM Plex Mono',monospace;margin-bottom:0.75rem;">SCORING FUNCTION w(B)</div>
+          <div class="score-formula">
+w(B) = <span class="coeff">0.35</span>×<span class="var">token_count</span>
+     + <span class="coeff">0.30</span>×<span class="var">through_holes</span>
+     + <span class="coeff">0.25</span>×(<span class="var">surface_area</span>/<span class="var">volume</span>)
+     + <span class="coeff">0.10</span>×<span class="var">bbox_diag</span>
+          </div>
+        </div> -->
+        <div style="margin-top:1rem;padding:1rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);">
+          <div style="font-size:0.8rem;font-weight:700;color:var(--text);margin-bottom:0.75rem;">Annotation Pipeline</div>
+          <div style="display:flex;flex-direction:column;gap:0.6rem;">
+            <div style="display:flex;gap:0.75rem;align-items:flex-start;">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:var(--cyan);background:rgba(0,200,255,0.1);border:1px solid rgba(0,200,255,0.2);border-radius:4px;padding:0.1rem 0.4rem;flex-shrink:0;">01</span>
+              <span style="font-size:0.82rem;color:var(--text2);">4 orthographic renders (512×512) via Blender + Freestyle edges</span>
+            </div>
+            <div style="display:flex;gap:0.75rem;align-items:flex-start;">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:var(--cyan);background:rgba(0,200,255,0.1);border:1px solid rgba(0,200,255,0.2);border-radius:4px;padding:0.1rem 0.4rem;flex-shrink:0;">02</span>
+              <span style="font-size:0.82rem;color:var(--text2);">Metadata extraction: dimensions, volume, surface area, hole count via Euler characteristic</span>
+            </div>
+            <div style="display:flex;gap:0.75rem;align-items:flex-start;">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:var(--cyan);background:rgba(0,200,255,0.1);border:1px solid rgba(0,200,255,0.2);border-radius:4px;padding:0.1rem 0.4rem;flex-shrink:0;">03</span>
+              <span style="font-size:0.82rem;color:var(--text2);">InternVL3-13B generates shape-centric captions with precise geometric details</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="caption-img-card fade-in">
+          <img src="assets/images/caption.png" alt="partABC caption examples" style="width:100%;height:auto;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
+          <div style="display:none;align-items:center;justify-content:center;height:200px;color:var(--text3);font-family:'IBM Plex Mono',monospace;font-size:0.78rem;">[ caption.png ]</div>
+          <div class="caption-img-label">Figure 5: Sample captions generated by our automated annotation pipeline using InternVL3-13B.</div>
+        </div>
+        
+      </div>
     
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-  </head>
+    </div>
 
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+    <!-- Dataset chart -->
+   
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- GALLERY / GENERATED SAMPLES -->
+<section id="samples">
+  <div class="section-inner">
+    <span class="section-label fade-in">/ 05 — Gallery</span>
+    <h2 class="section-title fade-in">Generated CAD Models</h2>
+    <p class="section-desc fade-in">High-fidelity 3D CAD models generated by NURBGen from text descriptions, converted to industry-standard BRep format.</p>
+
+    <div class="samples-grid fade-in">
+      <div class="sample-card">
+        <div class="sample-img">
+          <img src="assets/images/socket.png" alt="Socket head cap screw" onerror="this.style.display='none';this.parentElement.style.background='var(--surface2)';"/>
+        </div>
+        <div class="sample-prompt">
+          <strong>TEXT PROMPT</strong>
+          Socket head cap screw with a large countersunk washer. Features a <em>hexagonal</em> socket drive and a cylindrical threaded shank. Dimensions: length 92.96 mm, width 79.38 mm, height 43.66 mm. Ensure smooth curvature at transitions.
+        </div>
+      </div>
+      <div class="sample-card">
+        <div class="sample-img">
+          <img src="assets/images/rectangular-plate.png" alt="Rectangular plate" onerror="this.style.display='none';this.parentElement.style.background='var(--surface2)';"/>
+        </div>
+        <div class="sample-prompt">
+          <strong>TEXT PROMPT</strong>
+          Design a rectangular plate with dimensions <em>330.20 mm x 233.40 mm x 6.00 mm</em>. Include two square through-holes near each end.
+        </div>
+      </div>
+      <div class="sample-card">
+        <div class="sample-img">
+          <img src="assets/images/spherical-caps.png" alt="Cylindrical bushing" onerror="this.style.display='none';this.parentElement.style.background='var(--surface2)';"/>
+        </div>
+        <div class="sample-prompt">
+          <strong>TEXT PROMPT</strong>
+          Cylindrical bushing with flanges on both ends, featuring a central hollow bore. Symmetrical geometry, suitable for insertion, guiding, or alignment in mechanical assemblies.
+        </div>
+      </div>
+      <div class="sample-card">
+        <div class="sample-img">
+          <img src="assets/images/spherical.png" alt="Spherical object" onerror="this.style.display='none';this.parentElement.style.background='var(--surface2)';"/>
+        </div>
+        <div class="sample-prompt">
+          <strong>TEXT PROMPT</strong>
+          A spherical object with subtle indentations on its surface, exhibiting uniform dimensions of 2.33 mm in length, width, and height. The sphere has minor linear markings near the base.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- COMPARISON / QUALITATIVE -->
+<section id="qualitative">
+  <div class="section-inner">
+    <span class="section-label fade-in">/ 06 — Comparison</span>
+    <h2 class="section-title fade-in">Qualitative Comparison</h2>
+    <p class="section-desc fade-in">NURBGen consistently produces more detailed, structurally coherent results with fewer geometric artifacts than all baselines.</p>
+
+    <div class="card fade-in" style="overflow-x:auto;">
+      <img src="assets/images/qual_comp.svg" alt="Qualitative comparison of generated CAD models" style="width:100%;height:auto;border-radius: 20px;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
+      <p style="font-size:0.75rem;color:var(--text3);font-family:'IBM Plex Mono',monospace;padding:0.75rem 0 0;line-height:1.6;">Qualitative Comparison with Baselines.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+
+<!-- CITATION -->
+<section id="citation">
+  <div class="section-inner">
+    <span class="section-label fade-in">/ 09 — Reference</span>
+    <h2 class="section-title fade-in">Citation</h2>
+
+    <div class="card fade-in" style="position:relative;">
+      <div class="citation-block">
+        <button class="copy-btn" id="copyBtn" onclick="copyCitation()">Copy</button>
+@inproceedings{usama2025nurbgen, <br>
+  <span class="key">title</span>   = {<span class="val">NURBGen: High-Fidelity Text-to-CAD Generation
+             through LLM-Driven NURBS Modeling</span>}, <br>
+  <span class="key">author</span>  = {<span class="val">Usama, Muhammad and Khan, Mohammad Sadil and
+             Stricker, Didier and Afzal, Muhammad Zeshan</span>},<br>
+  <span class="key">booktitle</span>= {<span class="val">AAAI</span>},<br>
+  <span class="key">year</span>    = {<span class="val">2026</span>}
+}
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-text">
+      © 2026 DFKI · MindGarage · RPTU Kaiserslautern-Landau<br/>
+      <span style="opacity:0.6;">Funded by EU Horizon Europe grant 101135724 (LUMINOUS)</span>
+    </div>
+    <div class="footer-text">
+      Developed by <a href="https://mdsadilkhan.onrender.com/" target="_blank" rel="noopener">Mohammad Sadil Khan</a> and <a href="https://muhammadusama100.github.io/MUsama/" target="_blank" rel="noopener">Muhammad Usama</a>
+    </div>
+    <div class="footer-links">
+      <a href="mailto:mdsadilkhan99@gmail.com">Contact</a>
+    </div>
+  </div>
+</footer>
+
+<script src="assets/js/nurbs.js"></script>
+<script src="assets/js/curve.js"></script>
+<script src="assets/js/scripts.js"></script>
+
+
+</body>
 </html>
